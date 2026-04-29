@@ -26,3 +26,6 @@ pymongo[srv]==4.7.3
 bcrypt==4.1.3
 python-jose[cryptography]==3.3.0
 email-validator==2.1.1
+
+# Transcript fetching (replaces youtube-transcript-api for IP-block bypass)
+yt-dlp
