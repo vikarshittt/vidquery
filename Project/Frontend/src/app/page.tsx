@@ -65,7 +65,7 @@ function HeroSection() {
             </p>
 
             <motion.a
-              href="/use"
+              href="/signup"
               variants={buttonHover}
               initial="rest"
               whileHover="hover"
@@ -319,7 +319,7 @@ function CTASection() {
           Stop wasting time. Start getting answers. Try VidQuery for free today.
         </motion.p>
         <motion.a
-          href="/use"
+          href="/signup"
           variants={buttonHover}
           initial="rest"
           whileHover="hover"

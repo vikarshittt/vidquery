@@ -6,6 +6,8 @@ import { Youtube, Send, User, Brain, AlertTriangle, Link, MessageCircleQuestion 
 import Navbar from '@/components/Navbar'
 import VoiceSearchButton from '@/components/VoiceSearchButton'
 import { fadeInUp } from '@/lib/animations'
+import { useAuth } from '@/context/AuthContext'
+import { useSearchParams } from 'next/navigation'
 
 const extractVideoId = (url: string): string | null => {
   if (url.includes('youtube.com') || url.includes('youtu.be')) {
@@ -25,6 +27,9 @@ type Message = {
 }
 
 export default function ChatPage() {
+  const { token } = useAuth()
+  const searchParams = useSearchParams()
+
   const [url, setUrl] = useState('')
   const [query, setQuery] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
@@ -32,9 +37,34 @@ export default function ChatPage() {
   const videoId = useMemo(() => extractVideoId(url), [url])
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  // Pre-fill URL from query param (e.g. /use?video=VIDEO_ID)
+  useEffect(() => {
+    const vid = searchParams.get('video')
+    if (vid) setUrl(`https://www.youtube.com/watch?v=${vid}`)
+  }, [searchParams])
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
+
+  // Save history to backend after each bot response
+  const saveHistory = async (msgs: Message[], vid: string, vidUrl: string) => {
+    if (!token || !vid) return
+    try {
+      await fetch('http://localhost:8000/api/history/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          video_id: vid,
+          video_url: vidUrl,
+          title: `Video: ${vid}`,
+          messages: msgs.map(m => ({ role: m.role, content: m.content })),
+        }),
+      })
+    } catch {
+      // silently fail — history save is non-critical
+    }
+  }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -61,7 +91,11 @@ export default function ChatPage() {
       }
 
       const data = await response.json()
-      setMessages(prev => [...prev, { role: 'bot', content: data.answer }])
+      setMessages(prev => {
+        const updated = [...prev, { role: 'bot' as const, content: data.answer }]
+        if (videoId) saveHistory(updated, videoId, url)
+        return updated
+      })
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'An unexpected error occurred.'
       setMessages(prev => [...prev, { role: 'bot', content: message, isError: true }])
