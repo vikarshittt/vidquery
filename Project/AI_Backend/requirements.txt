@@ -1,0 +1,22 @@
+# Web Server
+fastapi
+uvicorn[standard]
+
+# HuggingFace Embeddings (replaces Gemini)
+langchain-huggingface
+
+# Environment Variables
+python-dotenv
+
+# YouTube Transcript Fetching
+youtube-transcript-api
+
+# LangChain Core & Components
+langchain
+langchain-google-genai
+langchain-community
+langchain-groq
+langchain-text-splitters
+
+# Vector Store (CPU version)
+faiss-cpu
