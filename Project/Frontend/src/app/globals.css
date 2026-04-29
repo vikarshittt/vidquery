@@ -1,2 +1,45 @@
 @import "tailwindcss";
 
+/* ─── Theme Tokens ─────────────────────────────────────────────────────────── */
+
+/* Light mode (default) */
+:root {
+  --color-surface: #ffffff;
+  --color-surface-elevated: #f9fafb;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
+  --color-accent: #dc2626;
+  --color-accent-hover: #b91c1c;
+  --color-shadow: rgba(0, 0, 0, 0.08);
+  --color-glass-bg: rgba(255, 255, 255, 0.8);
+  --color-glass-border: rgba(255, 255, 255, 0.3);
+}
+
+/* Dark mode */
+[data-theme="dark"] {
+  --color-surface: #0f172a;
+  --color-surface-elevated: #1e293b;
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-border: #334155;
+  --color-accent: #ef4444;
+  --color-accent-hover: #dc2626;
+  --color-shadow: rgba(0, 0, 0, 0.4);
+  --color-glass-bg: rgba(15, 23, 42, 0.8);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Smooth Theme Transition ───────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  transition: background-color 300ms ease, color 300ms ease,
+    border-color 300ms ease, box-shadow 300ms ease;
+}
+
+/* ─── Base Styles ───────────────────────────────────────────────────────────── */
+body {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+}

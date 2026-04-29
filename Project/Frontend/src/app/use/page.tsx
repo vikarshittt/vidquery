@@ -1,13 +1,11 @@
-
-
-
-
-
 'use client'
 
 import { useState, FormEvent, useMemo, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Youtube, Send, User, Brain, AlertTriangle, Link, MessageCircleQuestion } from 'lucide-react'
+import Navbar from '@/components/Navbar'
+import VoiceSearchButton from '@/components/VoiceSearchButton'
+import { fadeInUp } from '@/lib/animations'
 
 const extractVideoId = (url: string): string | null => {
   if (url.includes('youtube.com') || url.includes('youtu.be')) {
@@ -64,33 +62,22 @@ export default function ChatPage() {
 
       const data = await response.json()
       setMessages(prev => [...prev, { role: 'bot', content: data.answer }])
-    } catch (err: any) {
-      setMessages(prev => [...prev, { role: 'bot', content: err.message, isError: true }])
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred.'
+      setMessages(prev => [...prev, { role: 'bot', content: message, isError: true }])
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
-      <nav className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex-shrink-0 flex items-center">
-              <Youtube className="h-8 w-8 text-red-600" />
-              <span className="ml-2 text-2xl font-bold text-gray-900">
-                Vid<span className="text-red-600">Query</span>
-              </span>
-            </div>
-            <a href="/use" className="font-medium text-gray-600 hover:text-gray-900">
-              New Chat
-            </a>
-          </div>
-        </div>
-      </nav>
+    <div className="flex flex-col h-screen" style={{ background: 'var(--color-surface-elevated)' }}>
+      <Navbar variant="chat" />
 
       <main className="flex-1 flex flex-col md:flex-row overflow-hidden">
+        {/* Chat area */}
         <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
             <AnimatePresence>
               {messages.map((msg, idx) => (
@@ -101,35 +88,64 @@ export default function ChatPage() {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="p-4 md:p-6 bg-white/95 backdrop-blur-sm border-t border-gray-200">
+          {/* Input area */}
+          <div
+            className="p-4 md:p-6 border-t"
+            style={{
+              background: 'var(--color-glass-bg)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              borderColor: 'var(--color-border)',
+            }}
+          >
             <form onSubmit={handleSubmit} className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <Link className="h-5 w-5 text-gray-400" />
+              {/* URL input */}
+              <div
+                className="flex items-center space-x-2 rounded-full px-4 py-1 border"
+                style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+              >
+                <Link className="h-5 w-5 flex-shrink-0" style={{ color: 'var(--color-text-secondary)' }} />
                 <input
                   type="text"
                   value={url}
                   onChange={e => setUrl(e.target.value)}
                   placeholder="Paste YouTube URL or Video ID here..."
-                  className="flex-1 block w-full rounded-full border-gray-300 shadow-sm p-3 focus:border-red-500 focus:ring-red-500"
+                  className="flex-1 bg-transparent py-2 text-sm outline-none"
+                  style={{ color: 'var(--color-text-primary)' }}
                   required
                 />
               </div>
-              <div className="flex items-center space-x-2">
-                <MessageCircleQuestion className="h-5 w-5 text-gray-400" />
+
+              {/* Query input with voice + send */}
+              <div
+                className="flex items-center space-x-2 rounded-full px-4 py-1 border"
+                style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+              >
+                <MessageCircleQuestion className="h-5 w-5 flex-shrink-0" style={{ color: 'var(--color-text-secondary)' }} />
                 <input
                   type="text"
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder="Ask your question..."
-                  className="flex-1 block w-full rounded-full border-gray-300 shadow-sm p-3 focus:border-red-500 focus:ring-red-500"
+                  className="flex-1 bg-transparent py-2 text-sm outline-none"
+                  style={{ color: 'var(--color-text-primary)' }}
                   required
                 />
+                {/* Voice search button */}
+                <VoiceSearchButton
+                  onResult={(transcript) => setQuery(transcript)}
+                  onError={(msg) =>
+                    setMessages(prev => [...prev, { role: 'bot', content: msg, isError: true }])
+                  }
+                />
+                {/* Send button */}
                 <motion.button
                   type="submit"
                   disabled={isLoading}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="p-3 bg-red-600 text-white rounded-full shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                  className="p-2 rounded-full text-white shadow-sm disabled:opacity-50 flex-shrink-0"
+                  style={{ background: 'var(--color-accent)' }}
                 >
                   <Send className="h-5 w-5" />
                 </motion.button>
@@ -138,8 +154,14 @@ export default function ChatPage() {
           </div>
         </div>
 
-        <div className="w-full md:w-2/5 lg:w-1/3 p-4 md:p-6 bg-white border-l border-gray-200 overflow-y-auto">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Video Preview</h2>
+        {/* Video preview sidebar */}
+        <div
+          className="w-full md:w-2/5 lg:w-1/3 p-4 md:p-6 border-l overflow-y-auto"
+          style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+        >
+          <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+            Video Preview
+          </h2>
           <VideoPreview videoId={videoId} />
         </div>
       </main>
@@ -151,27 +173,49 @@ function ChatMessage({ message }: { message: Message }) {
   const isBot = message.role === 'bot'
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
+      variants={fadeInUp}
+      initial="hidden"
+      animate="visible"
       className={`flex items-start space-x-3 ${!isBot ? 'justify-end' : ''}`}
     >
+      {isBot && (
+        <div
+          className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+          style={{ background: message.isError ? 'color-mix(in srgb, var(--color-accent) 15%, transparent)' : '#1e293b' }}
+        >
+          {message.isError
+            ? <AlertTriangle className="w-5 h-5" style={{ color: 'var(--color-accent)' }} />
+            : <Brain className="w-5 h-5 text-red-500" />
+          }
+        </div>
+      )}
       <div
-        className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-          isBot ? (message.isError ? 'bg-red-100' : 'bg-gray-800') : 'bg-gray-300'
-        }`}
-      >
-        {isBot ? (message.isError ? <AlertTriangle className="w-5 h-5 text-red-600" /> : <Brain className="w-5 h-5 text-red-500" />) : <User className="w-5 h-5 text-gray-600" />}
-      </div>
-      <div
-        className={`p-3 rounded-lg max-w-lg ${
+        className="p-3 rounded-2xl max-w-lg"
+        style={
           isBot
-            ? `bg-white shadow border border-gray-100 ${message.isError ? 'text-red-700' : 'text-gray-800'}`
-            : 'bg-red-600 text-white shadow'
-        }`}
+            ? {
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                color: message.isError ? 'var(--color-accent)' : 'var(--color-text-primary)',
+                boxShadow: '0 2px 8px var(--color-shadow)',
+              }
+            : {
+                background: 'var(--color-accent)',
+                color: '#ffffff',
+                boxShadow: '0 2px 8px var(--color-shadow)',
+              }
+        }
       >
-        <p className="whitespace-pre-wrap">{message.content}</p>
+        <p className="whitespace-pre-wrap text-sm">{message.content}</p>
       </div>
+      {!isBot && (
+        <div
+          className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+          style={{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-border)' }}
+        >
+          <User className="w-5 h-5" style={{ color: 'var(--color-text-secondary)' }} />
+        </div>
+      )}
     </motion.div>
   )
 }
@@ -185,23 +229,28 @@ function TypingIndicator() {
       transition={{ duration: 0.3, ease: 'easeOut' }}
       className="flex items-start space-x-3"
     >
-      <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gray-800">
+      <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#1e293b' }}>
         <Brain className="w-5 h-5 text-red-500" />
       </div>
-      <div className="p-3 rounded-lg bg-white shadow border border-gray-100">
-        <motion.div
-          className="flex space-x-1"
-          transition={{ staggerChildren: 0.2, repeat: Infinity }}
-        >
-          {[1, 2, 3].map(i => (
+      <div
+        className="p-3 rounded-2xl"
+        style={{
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          boxShadow: '0 2px 8px var(--color-shadow)',
+        }}
+      >
+        <div className="flex space-x-1">
+          {[0, 1, 2].map(i => (
             <motion.div
               key={i}
-              className="w-2 h-2 bg-gray-400 rounded-full"
-              animate={{ y: [0, -3, 0] }}
-              transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}
+              className="w-2 h-2 rounded-full"
+              style={{ background: 'var(--color-text-secondary)' }}
+              animate={{ y: [0, -4, 0] }}
+              transition={{ duration: 0.6, repeat: Infinity, ease: 'easeInOut', delay: i * 0.15 }}
             />
           ))}
-        </motion.div>
+        </div>
       </div>
     </motion.div>
   )
@@ -210,16 +259,19 @@ function TypingIndicator() {
 function VideoPreview({ videoId }: { videoId: string | null }) {
   if (!videoId) {
     return (
-      <div className="aspect-video w-full bg-gray-100 rounded-lg flex items-center justify-center border border-dashed border-gray-300">
-        <div className="text-center text-gray-500">
-          <Youtube className="h-12 w-12 mx-auto" />
+      <div
+        className="aspect-video w-full rounded-2xl flex items-center justify-center border border-dashed"
+        style={{ background: 'var(--color-surface-elevated)', borderColor: 'var(--color-border)' }}
+      >
+        <div className="text-center" style={{ color: 'var(--color-text-secondary)' }}>
+          <Youtube className="h-12 w-12 mx-auto opacity-40" />
           <p className="mt-2 text-sm">Video preview will appear here</p>
         </div>
       </div>
     )
   }
   return (
-    <div className="aspect-video w-full rounded-lg overflow-hidden shadow-md">
+    <div className="aspect-video w-full rounded-2xl overflow-hidden shadow-md">
       <iframe
         width="100%"
         height="100%"
@@ -228,7 +280,7 @@ function VideoPreview({ videoId }: { videoId: string | null }) {
         frameBorder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowFullScreen
-      ></iframe>
+      />
     </div>
   )
 }
